@@ -1,6 +1,5 @@
 import concurrent
 import json
-import logging
 import webbrowser
 from concurrent.futures.thread import ThreadPoolExecutor
 from datetime import datetime
@@ -17,6 +16,7 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver import ActionChains
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait
+from spinlog import Spinner
 
 from notifications.notifications import NotificationHandler
 from utils import selenium_utils
@@ -67,79 +67,95 @@ ACCEPTED_LOCALES = [
     "sv_se",
     "de_at",
     "fr_be",
+    "da_dk",
+    "cs_cz",
 ]
 
 PAGE_TITLES_BY_LOCALE = {
-    'en_us': {  # Verified
-        'signed_in_help': "NVIDIA Online Store - Help",
-        'checkout': "NVIDIA Online Store - Checkout",
-        'verify_order': "NVIDIA Online Store - Verify Order",
-        'address_validation': "NVIDIA Online Store - Address Validation Suggestion Page",
-        'order_completed': "NVIDIA Online Store - Order Completed"
+    "en_us": {  # Verified
+        "signed_in_help": "NVIDIA Online Store - Help",
+        "checkout": "NVIDIA Online Store - Checkout",
+        "verify_order": "NVIDIA Online Store - Verify Order",
+        "address_validation": "NVIDIA Online Store - Address Validation Suggestion Page",
+        "order_completed": "NVIDIA Online Store - Order Completed",
     },
     "fr_be": {
-        'signed_in_help': "NVIDIA Online Store - Help",
-        'checkout': "NVIDIA Online Store - Checkout",
-        'verify_order': "NVIDIA Online Store - Verify Order",
-        'address_validation': "NVIDIA Online Store - Address Validation Suggestion Page",
-        'order_completed': "NVIDIA Online Store - Order Completed"
+        "signed_in_help": "NVIDIA Online Store - Help",
+        "checkout": "NVIDIA Online Store - Checkout",
+        "verify_order": "NVIDIA Online Store - Verify Order",
+        "address_validation": "NVIDIA Online Store - Address Validation Suggestion Page",
+        "order_completed": "NVIDIA Online Store - Order Completed",
     },
     "es_es": {
-        'signed_in_help': "NVIDIA Online Store - Help",
-        'checkout': "NVIDIA Online Store - Checkout",
-        'verify_order': "NVIDIA Online Store - Verify Order",
-        'address_validation': "NVIDIA Online Store - Address Validation Suggestion Page",
-        'order_completed': "NVIDIA Online Store - Order Completed"
+        "signed_in_help": "NVIDIA Tienda electrónica - Ayuda",
+        "checkout": "NVIDIA Tienda electrónica - Caja",
+        "verify_order": "NVIDIA Tienda electrónica - Verificar pedido",
+        "address_validation": "NVIDIA Tienda electrónica - Página de sugerencia para la validación de la dirección",
+        "order_completed": "NVIDIA Online Store - Order Completed",
     },
     "fr_fr": {
-        'signed_in_help': "NVIDIA Online Store - Help",
-        'checkout': "NVIDIA Online Store - Checkout",
-        'verify_order': "NVIDIA Online Store - Verify Order",
-        'address_validation': "NVIDIA Online Store - Address Validation Suggestion Page",
-        'order_completed': "NVIDIA Online Store - Order Completed"
+        "signed_in_help": "NVIDIA Boutique en ligne - Aide",
+        "checkout": "NVIDIA Boutique en ligne - panier et informations de facturation",
+        "verify_order": "NVIDIA Boutique en ligne - vérification de commande",
+        "address_validation": "NVIDIA Boutique en ligne - Page de suggestion et de validation d’adresse",
+        "order_completed": "NVIDIA Boutique en ligne - confirmation de commande",
     },
     "it_it": {
-        'signed_in_help': "NVIDIA Online Store - Help",
-        'checkout': "NVIDIA Online Store - Checkout",
-        'verify_order': "NVIDIA Online Store - Verify Order",
-        'address_validation': "NVIDIA Online Store - Address Validation Suggestion Page",
-        'order_completed': "NVIDIA Online Store - Order Completed"
+        "signed_in_help": "NVIDIA Online Store - Help",
+        "checkout": "NVIDIA Online Store - Checkout",
+        "verify_order": "NVIDIA Online Store - Verify Order",
+        "address_validation": "NVIDIA Online Store - Address Validation Suggestion Page",
+        "order_completed": "NVIDIA Online Store - Order Completed",
     },
     "nl_nl": {
-        'signed_in_help': "NVIDIA Online Store - Help",
-        'checkout': "NVIDIA Online Store - Checkout",
-        'verify_order': "NVIDIA Online Store - Verify Order",
-        'address_validation': "NVIDIA Online Store - Address Validation Suggestion Page",
-        'order_completed': "NVIDIA Online Store - Order Completed"
+        "signed_in_help": "NVIDIA Online winkel - Help",
+        "checkout": "NVIDIA Online winkel - Kassa",
+        "verify_order": "NVIDIA Online winkel - Bestelling controleren",
+        "address_validation": "NVIDIA Online winkel - Adres Validatie Suggestie pagina",
+        "order_completed": "NVIDIA Online winkel - Bestelling voltooid",
     },
     "sv_se": {
-        'signed_in_help': "NVIDIA Online Store - Help",
-        'checkout': "NVIDIA Online Store - Checkout",
-        'verify_order': "NVIDIA Online Store - Verify Order",
-        'address_validation': "NVIDIA Online Store - Address Validation Suggestion Page",
-        'order_completed': "NVIDIA Online Store - Order Completed"
+        "signed_in_help": "NVIDIA Online Store - Help",
+        "checkout": "NVIDIA Online Store - Checkout",
+        "verify_order": "NVIDIA Online Store - Verify Order",
+        "address_validation": "NVIDIA Online Store - Address Validation Suggestion Page",
+        "order_completed": "NVIDIA Online Store - Order Completed",
     },
     "de_de": {
-        'signed_in_help': "NVIDIA Online Store - Help",
-        'checkout': "NVIDIA Online Store - Checkout",
-        'verify_order': "NVIDIA Online Store - Verify Order",
-        'address_validation': "NVIDIA Online Store - Address Validation Suggestion Page",
-        'order_completed': "NVIDIA Online Store - Order Completed"
+        "signed_in_help": "NVIDIA Online-Shop - Hilfe",
+        "checkout": "NVIDIA Online-Shop - einkaufswagen",
+        "verify_order": "NVIDIA Online-Shop - bestellung überprüfen und bestätigen",
+        "address_validation": "NVIDIA Online-Shop - Adressüberprüfung Vorschlagsseite",
+        "order_completed": "NVIDIA Online Store - Order Completed",
     },
     "de_at": {
-        'signed_in_help': "NVIDIA Online Store - Help",
-        'checkout': "NVIDIA Online Store - Checkout",
-        'verify_order': "NVIDIA Online Store - Verify Order",
-        'address_validation': "NVIDIA Online Store - Address Validation Suggestion Page",
-        'order_completed': "NVIDIA Online Store - Order Completed"
+        "signed_in_help": "NVIDIA Online-Shop - Hilfe",
+        "checkout": "NVIDIA Online-Shop - einkaufswagen",
+        "verify_order": "NVIDIA Online-Shop - bestellung überprüfen und bestätigen",
+        "address_validation": "NVIDIA Online-Shop - Adressüberprüfung Vorschlagsseite",
+        "order_completed": "NVIDIA Online Store - Order Completed",
     },
     "en_gb": {
-        'signed_in_help': "NVIDIA Online Store - Help",
-        'checkout': "NVIDIA Online Store - Checkout",
-        'verify_order': "NVIDIA Online Store - Verify Order",
-        'address_validation': "NVIDIA Online Store - Address Validation Suggestion Page",
-        'order_completed': "NVIDIA Online Store - Order Completed"
-    }
+        "signed_in_help": "NVIDIA Online Store - Help",
+        "checkout": "NVIDIA Online Store - Checkout",
+        "verify_order": "NVIDIA Online Store - Verify Order",
+        "address_validation": "NVIDIA Online Store - Address Validation Suggestion Page",
+        "order_completed": "NVIDIA Online Store - Order Completed",
+    },
+    "da_dk": {
+        "signed_in_help": "NVIDIA Online Store - Help",
+        "checkout": "NVIDIA Online Store - Checkout",
+        "verify_order": "NVIDIA Online Store - Verify Order",
+        "address_validation": "NVIDIA Online Store - Address Validation Suggestion Page",
+        "order_completed": "NVIDIA Online Store - Order Completed",
+    },
+    "cs_cz": {
+        "signed_in_help": "NVIDIA Online Store - Help",
+        "checkout": "NVIDIA Online Store - Checkout",
+        "verify_order": "NVIDIA Online Store - Verify Order",
+        "address_validation": "NVIDIA Online Store - Address Validation Suggestion Page",
+        "order_completed": "NVIDIA Online Store - Order Completed",
+    },
 }
 
 autobuy_locale_btns = {
@@ -153,6 +169,8 @@ autobuy_locale_btns = {
     "de_at": ["Weiter", "Senden"],
     "en_gb": ["Continue Checkout", "submit"],
     "en_us": ["continue", "submit"],
+    "da_dk": ["continue", "submit"],
+    "cs_cz": ["continue", "submit"],
 }
 
 DEFAULT_HEADERS = {
@@ -172,7 +190,7 @@ class ProductIDChangedException(Exception):
 
 class NvidiaBuyer:
     def __init__(self, gpu, locale="en_us"):
-        self.product_ids = []
+        self.product_ids = set([])
         self.cli_locale = locale.lower()
         self.locale = self.map_locales()
         self.session = requests.Session()
@@ -189,14 +207,13 @@ class NvidiaBuyer:
                     self.nvidia_login = self.config["NVIDIA_LOGIN"]
                     self.nvidia_password = self.config["NVIDIA_PASSWORD"]
                     self.auto_buy_enabled = self.config["FULL_AUTOBUY"]
-                    self.cvv = self.config["CVV"]
+                    self.cvv = self.config.get("CVV")
+        else:
+            log.info("No Autobuy creds found.")
 
         # Disable auto_buy_enabled if the user does not provide a bool.
         if type(self.auto_buy_enabled) != bool:
             self.auto_buy_enabled = False
-
-        else:
-            log.info("No Autobuy creds found.")
 
         adapter = HTTPAdapter(
             max_retries=Retry(
@@ -210,7 +227,7 @@ class NvidiaBuyer:
         self.session.mount("http://", adapter)
         self.notification_handler = NotificationHandler()
 
-        log.info("Singing in")
+        log.info("Opening Webdriver")
         self.driver = webdriver.Chrome(
             executable_path=binary_path, options=options, chrome_options=chrome_options
         )
@@ -221,14 +238,15 @@ class NvidiaBuyer:
         log.info("Getting product IDs")
         self.access_token = self.get_nividia_access_token()
         self.payment_option = self.get_payment_options()
-        if not self.payment_option:
-            log.error("No payment option on account. Disable Autobuy")
+        if not self.payment_option.get("id") or not self.cvv:
+            log.error("No payment option on account or missing CVV. Disable Autobuy")
             self.auto_buy_enabled = False
         else:
-            log.info(self.payment_option)
+            log.debug(self.payment_option)
             self.ext_ip = self.get_ext_ip()
 
         if not self.auto_buy_enabled:
+            log.info("Closing webdriver")
             self.driver.close()
 
         self.get_product_ids()
@@ -250,6 +268,10 @@ class NvidiaBuyer:
             return "de_de"
         if self.cli_locale == "fr_be":
             return "fr_fr"
+        if self.cli_locale == "da_dk":
+            return "en_gb"
+        if self.cli_locale == "cs_cz":
+            return "en_gb"
         return self.cli_locale
 
     def get_product_ids(self, url=DIGITAL_RIVER_PRODUCT_LIST_URL):
@@ -269,7 +291,7 @@ class NvidiaBuyer:
         for product_obj in response_json["products"]["product"]:
             if product_obj["displayName"] == self.gpu_long_name:
                 if self.check_if_locale_corresponds(product_obj["id"]):
-                    self.product_ids.append(product_obj["id"])
+                    self.product_ids.add(product_obj["id"])
         if response_json["products"].get("nextPage"):
             self.get_product_ids(url=response_json["products"]["nextPage"]["uri"])
 
@@ -280,22 +302,30 @@ class NvidiaBuyer:
         log.info(f"Product IDs: {self.product_ids}")
         try:
             with ThreadPoolExecutor(max_workers=len(self.product_ids)) as executor:
-                product_futures = [executor.submit(self.buy, product_id) for product_id in self.product_ids]
+                product_futures = [
+                    executor.submit(self.buy, product_id)
+                    for product_id in self.product_ids
+                ]
                 concurrent.futures.wait(product_futures)
                 for fut in product_futures:
                     log.info(fut.result())
         except ProductIDChangedException as ex:
             log.warning("Product IDs changed.")
-            self.product_ids = []
+            self.product_ids = set([])
             self.get_product_ids()
             self.run_items()
 
-    def buy(self, product_id):
+    def buy(self, product_id, delay=3):
+        log.info(f"Checking stock for {product_id} at {delay} second intervals.")
         while not self.add_to_cart(product_id) and self.enabled:
-            sleep(3)
+            with Spinner.get("Still working...") as s:
+                sleep(delay)
         if self.enabled:
             self.apply_shopper_details()
             if self.auto_buy_enabled:
+                self.notification_handler.send_notification(
+                    f" {self.gpu_long_name} with product ID: {product_id} available!"
+                )
                 log.info("Auto buy enabled.")
                 # self.submit_cart()
                 self.selenium_checkout()
@@ -303,7 +333,8 @@ class NvidiaBuyer:
                 log.info("Auto buy disabled.")
                 cart_url = self.open_cart_url()
                 self.notification_handler.send_notification(
-                    f" {self.gpu_long_name} with product ID: {product_id} in stock: {cart_url}")
+                    f" {self.gpu_long_name} with product ID: {product_id} in stock: {cart_url}"
+                )
             self.enabled = False
 
     def open_cart_url(self):
@@ -314,60 +345,74 @@ class NvidiaBuyer:
         return url.url
 
     def selenium_checkout(self):
-        log.info("Opening cart.")
+        log.info("Checking out.")
         autobuy_btns = autobuy_locale_btns[self.locale]
         params = {"token": self.access_token}
         url = furl(DIGITAL_RIVER_CHECKOUT_URL).set(params)
         self.driver.get(url.url)
-        selenium_utils.wait_for_page(self.driver, PAGE_TITLES_BY_LOCALE[self.locale]['checkout'])
-        selenium_utils.button_click_using_xpath(
-            self.driver, "//div[@id='dr_siteButtons']/input[@value='continue']"
+        log.debug(
+            f"Waiting for page title: {PAGE_TITLES_BY_LOCALE[self.locale]['checkout']}"
         )
-        log.info("Entering security code.")
+        selenium_utils.wait_for_page(
+            self.driver, PAGE_TITLES_BY_LOCALE[self.locale]["checkout"]
+        )
+
+        log.info("Next.")
+        log.debug(f"Clicking on button: {autobuy_btns[0]}")
+        self.driver.find_element_by_xpath(f'//*[@value="{autobuy_btns[0]}"]').click()
+        log.debug(f"Entering security code to 'cardSecurityCode'")
         security_code = selenium_utils.wait_for_element(self.driver, "cardSecurityCode")
         security_code.send_keys(self.cvv)
-        selenium_utils.button_click_using_xpath(
-            self.driver, "//div[@id='dr_siteButtons']/input[@value='continue']"
-        )
+        log.info("Next.")
+        log.debug(f"Clicking on button: {autobuy_btns[0]}")
+        self.driver.find_element_by_xpath(f'//*[@value="{autobuy_btns[0]}"]').click()
 
         try:
+            log.debug(
+                f"Waiting for page title: {PAGE_TITLES_BY_LOCALE[self.locale]['verify_order']}"
+            )
             selenium_utils.wait_for_page(
-                self.driver, PAGE_TITLES_BY_LOCALE[self.locale]['verify_order'], 5
+                self.driver, PAGE_TITLES_BY_LOCALE[self.locale]["verify_order"], 5
             )
         except TimeoutException:
-            logging.error("Address validation required?")
+            log.debug("Address validation required?")
+            self.address_validation_page()
 
-        selenium_utils.wait_for_page(
-            self.driver, PAGE_TITLES_BY_LOCALE[self.locale]['verify_order'], 5
+        log.debug(
+            f"Waiting for page title: {PAGE_TITLES_BY_LOCALE[self.locale]['verify_order']}"
         )
-        log.info("Reached order validation page.")
+        selenium_utils.wait_for_page(
+            self.driver, PAGE_TITLES_BY_LOCALE[self.locale]["verify_order"], 5
+        )
+        log.info("Submit.")
+        log.debug("Reached order validation page.")
         self.driver.save_screenshot("nvidia-order-validation.png")
         self.driver.find_element_by_xpath(f'//*[@value="{autobuy_btns[1]}"]').click()
         selenium_utils.wait_for_page(
-            self.driver, PAGE_TITLES_BY_LOCALE[self.locale]['order_completed'], 5
+            self.driver, PAGE_TITLES_BY_LOCALE[self.locale]["order_completed"], 5
         )
         self.driver.save_screenshot("nvidia-order-finshed.png")
+        log.info("Done.")
 
     def address_validation_page(self):
         try:
             selenium_utils.wait_for_page(
                 self.driver,
-                PAGE_TITLES_BY_LOCALE[self.locale]['address_validation'],
+                PAGE_TITLES_BY_LOCALE[self.locale]["address_validation"],
                 5,
             )
-            logging.info("Setting suggested shipping information.")
+            log.debug("Setting suggested shipping information.")
             selenium_utils.wait_for_element(
-                self.driver, "billingAddressOptionRow1"
+                self.driver, "billingAddressOptionRow2"
             ).click()
             selenium_utils.button_click_using_xpath(
                 self.driver, "//input[@id='selectionButton']"
             )
         except TimeoutException:
-            logging.error("Address validation not required?")
-
+            log.error("Address validation not required?")
 
     def add_to_cart(self, product_id):
-        log.info(f"Checking if item ({product_id}) in stock")
+        log.debug(f"Checking if item ({product_id}) in stock")
         params = {
             "apiKey": DIGITAL_RIVER_API_KEY,
             "token": self.access_token,
@@ -379,19 +424,19 @@ class NvidiaBuyer:
         )
 
         if response.status_code == 200:
-            log.info("Item in stock!")
+            log.info(f"{self.gpu_long_name} ({product_id}) in stock!")
             return True
         elif response.status_code == 409:
             try:
                 response_json = response.json()
-                log.info(f"Error: {response_json['errors']['error']}")
-                for error in response_json['errors']['error']:
-                    if error['code'] == 'invalid-product-id':
+                log.debug(f"Error: {response_json['errors']['error']}")
+                for error in response_json["errors"]["error"]:
+                    if error["code"] == "invalid-product-id":
                         raise ProductIDChangedException()
             except json.decoder.JSONDecodeError as er:
                 log.warning(f"Failed to decode json: {response.text}")
         else:
-            log.info("item not in stock")
+            log.debug("item not in stock")
             return False
 
     def get_ext_ip(self):
@@ -418,14 +463,15 @@ class NvidiaBuyer:
             try:
                 return response_json["paymentOptions"]["paymentOption"][0]
             except:
-                return None
+                return {}
 
     def apply_shopper_details(self):
+        log.info("Apply shopper details")
         params = {
             "apiKey": DIGITAL_RIVER_API_KEY,
             "token": self.access_token,
             "billingAddressId": "",
-            "paymentOptionId": self.payment_option["id"],
+            "paymentOptionId": self.payment_option.get("id", ""),
             "shippingAddressId": "",
             "expand": "all",
         }
@@ -434,10 +480,12 @@ class NvidiaBuyer:
             headers=DEFAULT_HEADERS,
             params=params,
         )
-        log.debug(response.status_code)
-        log.debug(response.json())
+        log.debug(f"Apply shopper details response: {response.status_code}")
         if response.status_code == 200:
             log.info("Success apply_shopper_details")
+        else:
+            log.info("Error applying shopper details")
+            log.debug(json.dumps(response.json(), indent=1))
 
     def submit_cart(self):
         params = {
@@ -460,7 +508,7 @@ class NvidiaBuyer:
             log.info("Success submit_cart")
 
     def check_if_locale_corresponds(self, product_id):
-        special_locales = ["en_gb", "de_at", "de_de", "fr_fr", "fr_be"]
+        special_locales = ["en_gb", "de_at", "de_de", "fr_fr", "fr_be", "da_dk", "cs_cz"]
         if self.cli_locale in special_locales:
             url = f"{DIGITAL_RIVER_PRODUCT_LIST_URL}/{product_id}"
             log.debug(f"Calling {url}")
@@ -504,9 +552,11 @@ class NvidiaBuyer:
     def sign_in(self):
         log.info("Signing in.")
         self.driver.get(
-            "https://store.nvidia.com/DRHM/store?Action=Logout&SiteID=nvidia&Locale=en_US&ThemeID=326200&Env=BASE&nextAction=help"
+            f"https://store.nvidia.com/DRHM/store?Action=Logout&SiteID=nvidia&Locale={self.locale}&ThemeID=326200&Env=BASE&nextAction=help"
         )
-        selenium_utils.wait_for_page(self.driver, PAGE_TITLES_BY_LOCALE[self.locale]['signed_in_help'])
+        selenium_utils.wait_for_page(
+            self.driver, PAGE_TITLES_BY_LOCALE[self.locale]["signed_in_help"]
+        )
 
         if not self.is_signed_in():
             email = selenium_utils.wait_for_element(self.driver, "loginEmail")
