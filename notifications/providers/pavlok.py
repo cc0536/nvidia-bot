@@ -11,7 +11,6 @@ PAVLOK_CONFIG_KEYS = ["base_url"]
 
 ZAP_URL = "/zap/255"
 
-
 class PavlokHandler:
     enabled = False
 
