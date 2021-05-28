@@ -1,1 +1,1 @@
-pipenv run python app.py bestbuy --sku 6432399
+pipenv run python app.py bestbuy --sku 6444449
